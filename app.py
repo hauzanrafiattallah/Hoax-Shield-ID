@@ -30,8 +30,8 @@ st.markdown(
 
     section[data-testid="stSidebar"] {{
       background: transparent !important;
-      border-right: 1px solid currentColor;
-      opacity: .25;
+      border-right: 1px solid var(--text-color);
+      opacity: .20;
       }}
 
     
