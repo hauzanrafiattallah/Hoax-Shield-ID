@@ -2,415 +2,615 @@ import streamlit as st
 import numpy as np
 import joblib
 from typing import Tuple
-import time
+
+
+# CONFIG & STYLE
+
 
 APP_NAME = "HoaxShield ID"
-PRIMARY_COLOR = "#10B981"
-BACKGROUND_COLOR = "#0F172A"
-COMPONENT_COLOR = "#1E293B"
+PRIMARY_COLOR = "#39D177"
 
 st.set_page_config(
-    page_title=f"{APP_NAME} – Analisis Berita Indonesia",
+    page_title=f"{APP_NAME} – Deteksi Berita Hoaks Indonesia",
     page_icon="🛡️",
     layout="wide",
 )
 
+# Custom CSS 
 st.markdown(
     f"""
     <style>
-    .stApp {{
-        background-color: {BACKGROUND_COLOR};
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }}
-    
-    h1, h2, h3 {{
-        color: #F8FAFC !important;
-        font-weight: 600 !important;
-        letter-spacing: -0.02em;
-    }}
-    
-    p, li, div {{
-        color: #94A3B8;
-        line-height: 1.6;
+    /* Global */
+    .main {{
+        background: #0B1120;
+        color: #E5E7EB;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }}
 
     section[data-testid="stSidebar"] {{
-        background-color: {COMPONENT_COLOR};
-        border-right: 1px solid #334155;
+        background: #020617;
+        border-right: 1px solid #1F2937;
     }}
 
-    .stButton > button {{
-        background-color: {PRIMARY_COLOR};
-        color: #022C22;
-        border: none;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-        width: 100%;
+    /* Headings */
+    h1, h2, h3, h4 {{
+        color: #F9FAFB;
+        font-weight: 700 !important;
     }}
 
-    .stButton > button:hover {{
-        background-color: #34D399;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    /* Cards */
+    .card {{
+        background: #020617;
+        border-radius: 18px;
+        padding: 1.5rem 1.75rem;
+        border: 1px solid #111827;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.55);
     }}
 
-    .css-card {{
-        background-color: {COMPONENT_COLOR};
-        border: 1px solid #334155;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }}
-
-    .metric-container {{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }}
-
-    .status-label {{
+    .pill {{
+        display: inline-flex;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
         font-size: 0.75rem;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
+        border: 1px solid rgba(148,163,184,0.35);
+        color: #E5E7EB;
     }}
 
-    .result-value {{
-        font-size: 1.5rem;
+    .accent-pill {{
+        border-color: {PRIMARY_COLOR};
+        color: {PRIMARY_COLOR};
+        background: rgba(57, 209, 119, 0.08);
+    }}
+
+    .metric-label {{
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9CA3AF;
+    }}
+
+    .metric-value {{
+        font-size: 2.1rem;
         font-weight: 700;
-        color: #F8FAFC;
+    }}
+
+    .label-real {{
+        color: #22C55E;
+        background: rgba(34,197,94,0.12);
+        border-radius: 999px;
+        padding: 0.35rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }}
+
+    .label-hoax {{
+        color: #F97373;
+        background: rgba(239,68,68,0.12);
+        border-radius: 999px;
+        padding: 0.35rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }}
+
+    .label-dot {{
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: currentColor;
+    }}
+
+    .footer-text {{
+        font-size: 0.78rem;
+        color: #6B7280;
+        margin-top: 2rem;
     }}
 
     .stTextArea textarea {{
-        background-color: #020617;
-        color: #F1F5F9;
-        border: 1px solid #334155;
-        border-radius: 6px;
+        background: #020617;
+        border-radius: 16px;
+        border: 1px solid #1F2937;
+        color: #E5E7EB;
     }}
 
-    .stTextArea textarea:focus {{
-        border-color: {PRIMARY_COLOR};
-        box-shadow: 0 0 0 1px {PRIMARY_COLOR};
+    .stButton > button {{
+        background: {PRIMARY_COLOR};
+        color: #020617;
+        border-radius: 999px;
+        border: none;
+        font-weight: 600;
+        padding: 0.6rem 1.4rem;
     }}
 
-    .stProgress > div > div > div > div {{
-        background-color: {PRIMARY_COLOR};
-    }}
-    
-    hr {{
-        border-color: #334155;
+    .stButton > button:hover {{
+        filter: brightness(1.08);
     }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-@st.cache_resource(show_spinner=False)
+
+# LOAD MODEL
+
+
+@st.cache_resource(show_spinner=True)
 def load_model():
+    """
+    Load trained classifier from news_classifier.pkl.
+
+    Assumes that the pickle contains a scikit-learn Pipeline
+    with a vectorizer + classifier that supports:
+        - model.predict([text])
+        - model.predict_proba([text])
+    and that class '1' corresponds to HOAX.
+    """
     try:
         model = joblib.load("news_classifier.pkl")
     except Exception as e:
-        st.error("Sistem gagal memuat model klasifikasi. Pastikan file 'news_classifier.pkl' tersedia.")
+        st.error(
+            "Gagal memuat file `news_classifier.pkl`. "
+            "Pastikan file tersebut berada di direktori yang sama dengan `app.py`."
+        )
+        st.exception(e)
         st.stop()
     return model
 
+
 model = load_model()
 
+
 def predict_text(text: str) -> Tuple[str, float]:
+    """
+    Return predicted label ('Real' or 'Hoaks') and hoax probability (0–1).
+    """
     if not text.strip():
         return "N/A", 0.0
 
+    # Predict probabilities
     proba = model.predict_proba([text])[0]
-    
+
+    # safer: cari index class=1 (Hoax)
     try:
         classes = list(model.classes_)
         idx_hoax = classes.index(1)
     except Exception:
+        # fallback: asumsi kelas [0, 1]
         idx_hoax = 1
 
     proba_hoax = float(proba[idx_hoax])
-    label = "Hoaks" if proba_hoax >= 0.5 else "Valid"
+
+    label = "Hoaks" if proba_hoax >= 0.5 else "Real"
     return label, proba_hoax
+
+
+
+# SIDEBAR NAVIGATION
+
 
 st.sidebar.markdown(
     f"""
-    <div style="padding: 1rem 0; text-align: left;">
-        <h2 style="margin:0; font-size: 1.2rem; color: #10B981 !important;">🛡️ {APP_NAME}</h2>
-        <p style="font-size: 0.8rem; margin-top: 5px; color: #64748B;">Sistem Deteksi Berita & Literasi Digital</p>
+    <div style="padding-top:0.5rem; padding-bottom:0.75rem;">
+        <span class="pill accent-pill">🛡️ {APP_NAME}</span>
+        <div style="margin-top:0.75rem; font-size:0.8rem; color:#9CA3AF;">
+            Deteksi berita hoaks berbahasa Indonesia berbasis NLP
+            (TF-IDF + Logistic Regression).
+        </div>
     </div>
-    """, 
-    unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True,
 )
 
 page = st.sidebar.radio(
-    "Menu Utama",
+    "Navigasi",
     (
-        "Dashboard",
-        "Analisis Berita",
-        "Indikator Hoaks",
-        "Metodologi",
-        "Tentang Pengembang",
+        "Beranda",
+        "Deteksi Hoaks",
+        "Ciri-ciri Berita Hoaks",
+        "Sumber Data & Metode",
+        "Tentang Tim",
     ),
 )
 
-st.sidebar.markdown("---")
 st.sidebar.markdown(
     """
-    <div style="font-size: 0.75rem; color: #64748B;">
-    <strong>Panduan Singkat</strong><br>
-    Pastikan teks berita yang dimasukkan menggunakan Bahasa Indonesia yang baik untuk hasil analisis yang optimal.
-    </div>
-    """,
-    unsafe_allow_html=True
+    ---
+    **Tips:**  
+    • Masukkan teks berita selengkap mungkin.  
+    • Gunakan bahasa Indonesia.  
+    """
+)
+st.sidebar.markdown(
+    '<div style="font-size:0.75rem; color:#4B5563;">💡 Untuk keperluan riset & edukasi, bukan untuk kepentingan hukum atau komersial.</div>',
+    unsafe_allow_html=True,
 )
 
-if page == "Dashboard":
-    col_hero, col_info = st.columns([1.5, 1])
+# PAGES
 
-    with col_hero:
-        st.markdown(f"<h1 style='margin-bottom: 1rem;'>Selamat Datang di {APP_NAME}</h1>", unsafe_allow_html=True)
+if page == "Beranda":
+    col1, col2 = st.columns([1.3, 1])
+
+    with col1:
+        st.markdown('<span class="pill">Hoax Detection • NLP</span>', unsafe_allow_html=True)
         st.markdown(
-            """
-            <div class="css-card">
-                <p style="margin-bottom: 0;">
-                Platform ini dirancang untuk melakukan verifikasi awal terhadap validitas sebuah berita menggunakan pendekatan 
-                <em>Natural Language Processing</em> (NLP). Sistem ini dilatih untuk mengenali pola linguistik yang umum ditemukan 
-                pada berita palsu (hoaks) dibandingkan dengan jurnalisme standar.
+            f"<h1 style='margin-top:0.6rem;'>{APP_NAME}</h1>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"""
+            <p style="font-size:1.02rem; color:#D1D5DB;">
+            Platform sederhana untuk <b>mengecek apakah sebuah berita cenderung hoaks atau real</b> 
+            menggunakan model machine learning yang dilatih pada ribuan berita online Indonesia
+            (TurnBackHoax, Antara, Kompas, Detik).
+            </p>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            f"""
+            <div class="card" style="margin-top:1rem;">
+                <div class="metric-label">Kenapa aplikasi ini dibuat?</div>
+                <p style="font-size:0.94rem; color:#9CA3AF; margin-top:0.4rem;">
+                    Penyebaran hoaks di media sosial dan aplikasi chat semakin masif. 
+                    {APP_NAME} membantu pengguna memiliki <b>second opinion</b> saat membaca berita, 
+                    dengan memberikan indikasi probabilitas hoaks berdasarkan pola bahasa.
                 </p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        
-        st.markdown("### Fitur Utama")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown(
-                """
-                <div class="css-card" style="padding: 1rem;">
-                    <strong style="color: #F8FAFC;">Analisis Cepat</strong>
-                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">
-                    Mendeteksi indikasi hoaks dalam hitungan detik menggunakan model Machine Learning.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        with c2:
-            st.markdown(
-                """
-                <div class="css-card" style="padding: 1rem;">
-                    <strong style="color: #F8FAFC;">Probabilitas Terukur</strong>
-                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">
-                    Menampilkan skor keyakinan model terhadap prediksi yang diberikan.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
 
-    with col_info:
+        st.markdown("")
+        st.markdown("### Cara pakai singkat")
         st.markdown(
             """
-            <div class="css-card">
-                <h4 style="color: #F8FAFC; margin-bottom: 1rem;">Spesifikasi Model</h4>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;">
-                    <span>Algoritma</span>
-                    <span style="color: #F8FAFC;">Logistic Regression</span>
+            1. Buka menu **Deteksi Hoaks** di sidebar.  
+            2. Paste teks berita (judul + isi) ke dalam kotak yang tersedia.  
+            3. Klik **Cek Berita** dan lihat hasil prediksi + probabilitas hoaks.  
+            4. Baca juga halaman **Ciri-ciri Berita Hoaks** untuk edukasi tambahan.
+            """
+        )
+
+    with col2:
+        st.markdown(
+            f"""
+            <div class="card" style="margin-top:0.5rem;">
+                <div class="metric-label">Model</div>
+                <div style="margin-top:0.35rem; font-size:0.95rem;">
+                    <b>TF-IDF + Logistic Regression</b><br/>
+                    <span style="font-size:0.8rem; color:#9CA3AF;">
+                        Dilatih dengan dataset <b>Deteksi Berita Hoaks Indo</b> (Kaggle).
+                    </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;">
-                    <span>Ekstraksi Fitur</span>
-                    <span style="color: #F8FAFC;">TF-IDF Vectorizer</span>
+                <div style="margin-top:1.1rem;">
+                    <div class="metric-label">Performa (Test Set)</div>
+                    <div class="metric-value">≈ 0.98</div>
+                    <div style="font-size:0.8rem; color:#9CA3AF;">Accuracy</div>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;">
-                    <span>Akurasi Test</span>
-                    <span style="color: #10B981;">~98%</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Bahasa</span>
-                    <span style="color: #F8FAFC;">Indonesia</span>
-                </div>
+                <hr style="border-color:#111827; margin:1rem 0 0.9rem 0;"/>
+                <ul style="font-size:0.85rem; color:#9CA3AF; padding-left:1.2rem;">
+                    <li>AUC ROC ≈ 0.998</li>
+                    <li>Bahasa: Indonesia</li>
+                    <li>Jenis tugas: biner (Real vs Hoaks)</li>
+                </ul>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-elif page == "Analisis Berita":
-    st.markdown("<h1>Analisis Validitas Berita</h1>", unsafe_allow_html=True)
     st.markdown(
-        """
-        <p style='margin-bottom: 2rem;'>
-        Silakan masukkan judul dan isi berita pada kolom di bawah ini. Sistem akan melakukan pemindaian pola teks.
-        </p>
-        """, 
-        unsafe_allow_html=True
+        f"""
+        <div class="footer-text">
+        ⚠️ <b>Disclaimer:</b> {APP_NAME} tidak menggantikan verifikasi fakta profesional.
+        Gunakan sebagai alat bantu, bukan satu-satunya sumber kebenaran.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    col_input, col_result = st.columns([1.3, 1])
+elif page == "Deteksi Hoaks":
+    st.markdown('<span class="pill accent-pill">📰 Deteksi Berita</span>', unsafe_allow_html=True)
+    st.markdown("<h1>Cek Berita Hoaks atau Real</h1>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        Tempelkan teks berita (judul + isi singkat) pada kotak di bawah.  
+        Model akan mengembalikan prediksi apakah berita cenderung **Real** atau **Hoaks**, 
+        beserta skor probabilitas hoaks.
+        """
+    )
+
+    col_input, col_result = st.columns([1.4, 1])
 
     with col_input:
-        user_input = st.text_area(
-            "Input Teks Berita",
-            height=300,
-            placeholder="Tempelkan teks berita di sini..."
+        default_text = (
+            "Jakarta (ANTARA) – Anggota DPR menilai pemerintah perlu memperkuat literasi digital "
+            "masyarakat untuk menangkal penyebaran berita hoaks di media sosial."
         )
-        
-        analyze_btn = st.button("Jalankan Analisis")
+        text = st.text_area(
+            "Teks Berita",
+            value=default_text,
+            height=260,
+            help="Masukkan berita dalam bahasa Indonesia. Minimal beberapa kalimat.",
+        )
+
+        cek = st.button("Cek Berita")
 
     with col_result:
-        if analyze_btn:
-            if not user_input.strip():
-                st.error("Kesalahan: Input teks tidak boleh kosong. Harap masukkan berita yang valid.")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+
+        if cek:
+            label, proba_hoax = predict_text(text)
+
+            if label == "N/A":
+                st.write("Masukkan teks berita terlebih dahulu.")
             else:
-                with st.spinner("Sedang memproses algoritma prediksi..."):
-                    time.sleep(0.5)
-                    label, proba = predict_text(user_input)
-                
-                st.success("Proses analisis berhasil diselesaikan.")
-                
-                confidence_score = proba * 100
-                is_hoax = label == "Hoaks"
-                
-                status_color = "#EF4444" if is_hoax else "#10B981"
-                status_text = "TERINDIKASI HOAKS" if is_hoax else "TERINDIKASI VALID"
-                
-                st.markdown(
-                    f"""
-                    <div class="css-card" style="border-left: 4px solid {status_color};">
-                        <div class="status-label" style="color: {status_color};">Hasil Klasifikasi</div>
-                        <div class="result-value">{status_text}</div>
-                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            Berdasarkan pola sintaksis dan semantik teks.
-                        </p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                
-                st.markdown(
-                    f"""
-                    <div class="css-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span style="font-size: 0.9rem;">Probabilitas Hoaks</span>
-                            <span style="font-weight: bold; color: {status_color};">{confidence_score:.1f}%</span>
+                # Label badge
+                if label == "Real":
+                    st.markdown(
+                        """
+                        <div class="metric-label">Hasil Prediksi</div>
+                        <div style="margin-top:0.65rem;">
+                            <span class="label-real">
+                                <span class="label-dot"></span>
+                                Berita cenderung <b>REAL</b>
+                            </span>
                         </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(
+                        """
+                        <div class="metric-label">Hasil Prediksi</div>
+                        <div style="margin-top:0.65rem;">
+                            <span class="label-hoax">
+                                <span class="label-dot"></span>
+                                Berita cenderung <b>HOAKS</b>
+                            </span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                st.markdown("<br/>", unsafe_allow_html=True)
+
+                # Probability display
+                pct_hoax = proba_hoax * 100
+                pct_real = 100 - pct_hoax
+
+                st.markdown(
+                    f"""
+                    <div class="metric-label">Probabilitas Hoaks</div>
+                    <div class="metric-value">{pct_hoax:.1f}%</div>
+                    <div style="font-size:0.82rem; color:#9CA3AF;">
+                        (Probabilitas bahwa berita termasuk kelas <b>Hoaks</b> menurut model.)
                     </div>
                     """,
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
-                st.progress(min(max(proba, 0.0), 1.0))
-                
-                interpretation = (
-                    "Model mendeteksi pola bahasa yang sangat mirip dengan data latih kategori Hoaks. Disarankan untuk melakukan verifikasi silang."
-                    if is_hoax else
-                    "Struktur teks konsisten dengan pola berita standar (Valid). Namun, tetap pastikan sumber berita kredibel."
+
+                st.progress(min(max(proba_hoax, 0.0), 1.0))
+
+                st.markdown("---")
+
+                st.markdown(
+                    f"""
+                    <div style="font-size:0.86rem; color:#9CA3AF;">
+                        <b>Interpretasi cepat:</b><br/>
+                        • Jika skor hoaks &gt; 70%, sebaiknya sangat berhati-hati dan lakukan cross-check. <br/>
+                        • Jika skor berada di sekitar 50%, berita mengandung pola bahasa campuran — verifikasi manual sangat disarankan. <br/>
+                        • Jika skor hoaks &lt; 30%, berita cenderung mengikuti pola bahasa berita <i>real</i> dalam dataset pelatihan.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
-                
-                st.info(interpretation)
-        
         else:
             st.markdown(
                 """
-                <div class="css-card" style="text-align: center; color: #64748B; padding: 3rem 1rem;">
-                    <p>Menunggu input data untuk memulai analisis.</p>
-                </div>
+                Belum ada prediksi. Masukkan teks berita di sebelah kiri lalu klik tombol
+                <b>"Cek Berita"</b>.
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
-elif page == "Indikator Hoaks":
-    st.markdown("<h1>Indikator Umum Berita Hoaks</h1>", unsafe_allow_html=True)
-    st.markdown("<p>Kenali ciri-ciri disinformasi untuk meningkatkan kewaspadaan digital.</p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+elif page == "Ciri-ciri Berita Hoaks":
+    st.markdown('<span class="pill">Edukasi</span>', unsafe_allow_html=True)
+    st.markdown("<h1>Ciri-ciri Umum Berita Hoaks</h1>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        Meskipun model machine learning dapat membantu, kemampuan literasi digital pengguna tetap
+        yang paling penting. Berikut beberapa ciri umum berita hoaks di media online:
+        """
+    )
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown(
             """
-            <div class="css-card">
-                <h3 style="color: #10B981 !important;">Judul Provokatif</h3>
-                <p>Penggunaan huruf kapital berlebih, tanda seru ganda, dan pemilihan kata yang memancing emosi negatif (marah, takut) tanpa substansi yang jelas.</p>
-            </div>
-            <div class="css-card">
-                <h3 style="color: #10B981 !important;">Sumber Anonim</h3>
-                <p>Tidak mencantumkan nama penulis, redaksi, atau mengutip narasumber yang tidak dapat diverifikasi kredibilitasnya.</p>
+            <div class="card">
+            <h3>🧨 Judul Sensasional & Provokatif</h3>
+            <ul>
+                <li>Banyak huruf kapital: <i>"HEBOH!!!"</i>, <i>"TERBONGKAR!!"</i></li>
+                <li>Memancing emosi marah / takut berlebihan.</li>
+                <li>Sering tidak seimbang dengan isi berita.</li>
+            </ul>
+
+            <h3>❓ Sumber Tidak Jelas</h3>
+            <ul>
+                <li>Tidak menyebutkan narasumber yang kredibel.</li>
+                <li>Domain situs mencurigakan atau mirip media resmi.</li>
+                <li>Tidak ada informasi tanggal, penulis, atau redaksi.</li>
+            </ul>
+
+            <h3>📷 Konten Visual Menyesatkan</h3>
+            <ul>
+                <li>Foto/video lama dipakai untuk konteks kejadian baru.</li>
+                <li>Gambar diambil dari peristiwa berbeda.</li>
+            </ul>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with col2:
         st.markdown(
             """
-            <div class="css-card">
-                <h3 style="color: #10B981 !important;">Distorsi Visual</h3>
-                <p>Menggunakan foto atau video lama yang didaur ulang untuk konteks kejadian baru, atau hasil manipulasi penyuntingan digital.</p>
-            </div>
-            <div class="css-card">
-                <h3 style="color: #10B981 !important;">Fanatisme & Bias</h3>
-                <p>Nigrasi opini subjektif yang disajikan seolah-olah fakta objektif, seringkali menyerang kelompok tertentu secara tidak berimbang.</p>
+            <div class="card">
+            <h3>📤 Ajakan Share Berantai</h3>
+            <ul>
+                <li>Kalimat seperti <i>"Sebarkan ke semua grup!"</i>, <i>"Jangan berhenti di kamu"</i>.</li>
+                <li>Menekankan kecepatan share daripada verifikasi.</li>
+            </ul>
+
+            <h3>🧪 Tidak Konsisten dengan Fakta Lain</h3>
+            <ul>
+                <li>Bertolak belakang dengan informasi dari media kredibel.</li>
+                <li>Tidak ada rilis resmi dari lembaga terkait.</li>
+            </ul>
+
+            <h3>💬 Teknik Argumentasi Lemah</h3>
+            <ul>
+                <li>Banyak opini pribadi yang dibungkus seolah fakta.</li>
+                <li>Menggunakan kata-kata absolut: <i>"pasti", "dijamin", "100%"</i>.</li>
+            </ul>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-elif page == "Metodologi":
-    st.markdown("<h1>Metodologi & Sumber Data</h1>", unsafe_allow_html=True)
-    
-    st.markdown("### Dataset")
+    st.markdown("### Cara Verifikasi Sederhana")
     st.markdown(
         """
-        <div class="css-card">
-            Sistem dikembangkan menggunakan dataset <strong>Deteksi Berita Hoaks Indo</strong> yang bersumber dari repositori publik. 
-            Dataset mencakup ribuan artikel yang telah dikurasi dari berbagai sumber:
-            <ul style="margin-top: 0.5rem; color: #94A3B8;">
-                <li>TurnBackHoax.id (MAFINDO)</li>
-                <li>Antara News</li>
-                <li>Kompas</li>
-                <li>Detik</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True
+        - Cari berita yang sama di beberapa media arus utama.  
+        - Gunakan situs cek fakta seperti **TurnBackHoax.id**.  
+        - Periksa tanggal, konteks, dan sumber resmi (pemerintah, lembaga terkait).  
+        - Waspadai screenshot chat / status yang mudah dimanipulasi.
+        """
     )
 
-    st.markdown("### Arsitektur Sistem")
+elif page == "Sumber Data & Metode":
+    st.markdown('<span class="pill">Metodologi</span>', unsafe_allow_html=True)
+    st.markdown("<h1>Sumber Data & Metode Pemodelan</h1>", unsafe_allow_html=True)
+
+    st.markdown("## 📂 Dataset")
     st.markdown(
         """
-        <div class="css-card">
-            <ol style="margin-top: 0.5rem; color: #94A3B8; padding-left: 1.5rem;">
-                <li style="margin-bottom: 0.5rem;"><strong>Preprocessing:</strong> Pembersihan teks, normalisasi karakter, dan tokenisasi.</li>
-                <li style="margin-bottom: 0.5rem;"><strong>Feature Engineering:</strong> Menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk pembobotan kata.</li>
-                <li style="margin-bottom: 0.5rem;"><strong>Modeling:</strong> Algoritma Logistic Regression dipilih karena efisiensi dan interpretabilitas yang baik pada data teks dimensi tinggi.</li>
-                <li><strong>Evaluasi:</strong> Model diuji menggunakan metrik Akurasi, Presisi, Recall, dan AUC-ROC.</li>
-            </ol>
-        </div>
-        """,
-        unsafe_allow_html=True
+        Aplikasi ini menggunakan dataset **“Deteksi Berita Hoaks Indo”** dari Kaggle
+        yang disusun oleh **Mochamad Abdul Azis**.  
+        Dataset berisi berita dalam bahasa Indonesia yang diambil dari:
+        """
     )
 
-elif page == "Tentang Pengembang":
-    st.markdown("<h1>Informasi Pengembang</h1>", unsafe_allow_html=True)
     st.markdown(
         """
-        <div class="css-card">
-            <p>
-            Aplikasi ini merupakan hasil pengembangan riset di bidang <em>Artificial Intelligence</em>. 
-            Tujuan utama proyek ini adalah menyediakan alat bantu (assistive tool) bagi masyarakat dalam menyaring informasi di era digital.
-            </p>
-            <p>
-            <strong>Disclaimer:</strong> Hasil prediksi model adalah indikasi statistik berdasarkan pola data latih dan tidak bersifat absolut. 
-            Pengguna diharapkan tetap melakukan verifikasi mandiri melalui kanal resmi.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
+        - **TurnBackHoax.id** – basis data hoaks yang dikurasi oleh MAFINDO  
+        - **AntaraNews** – kantor berita nasional  
+        - **Kompas**  
+        - **Detik**  
+        """
+    )
+
+    st.markdown(
+        """
+        Perkiraan jumlah entri:
+        - TurnBackHoax.id: ~12.744  
+        - Antaranews: ~4.200  
+        - Kompas: ~3.500  
+        - Detik: ~3.498  
+
+        Label utama:
+        - `0` → Real (berita benar / bukan hoaks)  
+        - `1` → Hoax  
+        """
+    )
+
+    st.markdown("## 🧠 Metode Machine Learning")
+    st.markdown(
+        """
+        1. **Pre-processing Teks**  
+           - Normalisasi huruf kecil  
+           - Pembersihan tanda baca, angka, dan karakter tidak relevan  
+           - Tokenisasi dasar  
+
+        2. **Representasi Teks – TF-IDF**  
+           - Menggunakan `TfidfVectorizer` dari scikit-learn  
+           - N-gram: 1–2 (unigram & bigram)  
+           - `min_df=5`, `max_df=0.9`  
+
+        3. **Model Klasifikasi – Logistic Regression**  
+           - `LogisticRegression(max_iter=200, n_jobs=-1)`  
+           - Fungsi prediksi:
+             - `predict()` → kelas hoaks / real  
+             - `predict_proba()` → probabilitas masing-masing kelas  
+
+        4. **Evaluasi**  
+           - Train / validation / test split  
+           - Metrik utama:
+             - Accuracy (test): ≈ **0.979**  
+             - F1-score seimbang untuk kelas Real & Hoaks  
+             - AUC ROC (test): ≈ **0.998**  
+             - Confusion matrix menunjukkan kesalahan relatif kecil pada kedua kelas.
+        """
+    )
+
+    st.markdown("## ⚖️ Lisensi & Catatan")
+    st.markdown(
+        """
+        - Dataset hanya digunakan untuk **riset dan edukasi**, bukan untuk tujuan komersial.  
+        - Hak cipta konten berita tetap milik masing-masing media.  
+        - Jika digunakan dalam laporan atau publikasi, harap mencantumkan atribusi kepada:
+            - Sumber berita asli (Antaranews, Kompas, Detik, TurnBackHoax.id).  
+            - Pembuat dataset: **Mochamad Abdul Azis** (Kaggle).  
+        """
+    )
+
+elif page == "Tentang Tim":
+    st.markdown('<span class="pill">About</span>', unsafe_allow_html=True)
+    st.markdown("<h1>Tentang Proyek & Tim Pengembang</h1>", unsafe_allow_html=True)
+
+    st.markdown(
+        """
+        Aplikasi ini dikembangkan sebagai bagian dari tugas/penelitian kelompok di bidang
+        **Natural Language Processing dan Keamanan Informasi / Literasi Digital**.
+        """
+    )
+
+    st.markdown("## 🎯 Tujuan Proyek")
+    st.markdown(
+        """
+        - Meningkatkan kesadaran mengenai bahaya penyebaran berita hoaks.  
+        - Menunjukkan bagaimana teknik **machine learning** dapat membantu proses cek fakta awal.  
+        - Menjadi studi kasus penerapan **TF-IDF + Logistic Regression** pada teks bahasa Indonesia.  
+        """
+    )
+
+    st.markdown("## 👥 Anggota Kelompok")
+    st.markdown(
+        """
+        (Silakan isi sendiri nama & peran anggota di sini, misalnya:)
+
+        - **Nama 1** – Data Collection & Preprocessing  
+        - **Nama 2** – Model Development & Evaluation  
+        - **Nama 3** – UI/UX & Implementasi Streamlit  
+        - **Nama 4** – Dokumentasi & Laporan  
+        """
+    )
+
+    st.markdown("## 📌 Catatan Penggunaan")
+    st.markdown(
+        """
+        - Aplikasi ini tidak menggantikan kerja jurnalis dan pemeriksa fakta profesional.  
+        - Hasil prediksi sebaiknya selalu dikombinasikan dengan:
+          - pengecekan ke media resmi,  
+          - rilis lembaga pemerintah / otoritas terkait,  
+          - dan platform cek fakta independen.
+        """
     )
