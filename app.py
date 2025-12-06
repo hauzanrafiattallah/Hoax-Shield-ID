@@ -29,9 +29,10 @@ st.markdown(
 
 
     section[data-testid="stSidebar"] {{
-        background: transparent !important;
-        border-right: 1px solid rgba(0,0,0,0.1);
-    }}
+      background: transparent !important;
+      border-right: 1px solid currentColor;
+      opacity: .25;
+      }}
 
     
     h1, h2, h3, h4 {{
