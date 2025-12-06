@@ -20,26 +20,26 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
-    /* Global */
+
     .main {{
         color: inherit;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
         background: transparent;
     }}
 
-    /* Sidebar */
+
     section[data-testid="stSidebar"] {{
         background: transparent !important;
         border-right: 1px solid rgba(0,0,0,0.1);
     }}
 
-    /* Headings */
+    
     h1, h2, h3, h4 {{
         font-weight: 700 !important;
         color: inherit !important;
     }}
 
-    /* Cards */
+    
     .card {{
         border-radius: 18px;
         padding: 1.5rem 1.75rem;
@@ -112,7 +112,7 @@ st.markdown(
         margin-top: 2rem;
     }}
 
-    /* Textarea mengikuti tema Streamlit */
+    
     .stTextArea textarea {{
         border-radius: 16px;
         border: 1px solid rgba(0,0,0,0.2);
@@ -120,7 +120,7 @@ st.markdown(
         color: inherit !important;
     }}
 
-    /* Button */
+    
     .stButton > button {{
         background: {PRIMARY_COLOR};
         color: black;
@@ -247,7 +247,7 @@ if page == "Beranda":
         )
         st.markdown(
             f"""
-            <p style="font-size:1.02rem; color:#D1D5DB;">
+            <p style="font-size:1.02rem;">
             Platform sederhana untuk <b>mengecek apakah sebuah berita cenderung hoaks atau real</b> 
             menggunakan model machine learning yang dilatih pada ribuan berita online Indonesia
             (TurnBackHoax, Antara, Kompas, Detik).
