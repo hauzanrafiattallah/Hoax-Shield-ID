@@ -30,8 +30,12 @@ st.markdown(
 
     section[data-testid="stSidebar"] {{
       background: transparent !important;
-      border-right: 1px solid var(--text-color);
-      }}
+      border-right: 1px solid var(--border-color) !important;
+    }}
+
+    section[data-testid="stSidebar"] > div:first-child {{
+      padding-right: 0 !important;
+    }}
 
     
     h1, h2, h3, h4 {{
