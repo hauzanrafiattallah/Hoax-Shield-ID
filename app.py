@@ -22,29 +22,30 @@ st.markdown(
     <style>
     /* Global */
     .main {{
-        background: #0B1120;
-        color: #E5E7EB;
+        color: inherit;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        background: transparent;
     }}
 
+    /* Sidebar */
     section[data-testid="stSidebar"] {{
-        background: #020617;
-        border-right: 1px solid #1F2937;
+        background: transparent !important;
+        border-right: 1px solid rgba(0,0,0,0.1);
     }}
 
     /* Headings */
     h1, h2, h3, h4 {{
-        color: #F9FAFB;
         font-weight: 700 !important;
+        color: inherit !important;
     }}
 
     /* Cards */
     .card {{
-        background: #020617;
         border-radius: 18px;
         padding: 1.5rem 1.75rem;
-        border: 1px solid #111827;
-        box-shadow: 0 18px 45px rgba(0,0,0,0.55);
+        border: 1px solid rgba(0,0,0,0.1);
+        background: transparent !important;
+        box-shadow: none;
     }}
 
     .pill {{
@@ -55,20 +56,22 @@ st.markdown(
         letter-spacing: 0.06em;
         text-transform: uppercase;
         border: 1px solid rgba(148,163,184,0.35);
-        color: #E5E7EB;
+        color: inherit;
+        background: transparent;
     }}
 
     .accent-pill {{
         border-color: {PRIMARY_COLOR};
         color: {PRIMARY_COLOR};
-        background: rgba(57, 209, 119, 0.08);
+        background: rgba(57, 209, 119, 0.15);
     }}
 
     .metric-label {{
         font-size: 0.8rem;
-        text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #9CA3AF;
+        text-transform: uppercase;
+        color: inherit;
+        opacity: .75;
     }}
 
     .metric-value {{
@@ -105,20 +108,22 @@ st.markdown(
 
     .footer-text {{
         font-size: 0.78rem;
-        color: #6B7280;
+        opacity: .7;
         margin-top: 2rem;
     }}
 
+    /* Textarea mengikuti tema Streamlit */
     .stTextArea textarea {{
-        background: #020617;
         border-radius: 16px;
-        border: 1px solid #1F2937;
-        color: #E5E7EB;
+        border: 1px solid rgba(0,0,0,0.2);
+        background: transparent !important;
+        color: inherit !important;
     }}
 
+    /* Button */
     .stButton > button {{
         background: {PRIMARY_COLOR};
-        color: #020617;
+        color: black;
         border-radius: 999px;
         border: none;
         font-weight: 600;
@@ -132,6 +137,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 
 
 # LOAD MODEL
