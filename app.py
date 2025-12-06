@@ -224,7 +224,7 @@ st.sidebar.markdown(
     """
 )
 st.sidebar.markdown(
-    '<div style="font-size:0.75rem; color:#4B5563;">💡 Untuk keperluan riset & edukasi, bukan untuk kepentingan hukum atau komersial.</div>',
+    '<div style="font-size:0.75rem; color:#FFFFF;">💡 Untuk keperluan riset & edukasi, bukan untuk kepentingan hukum atau komersial.</div>',
     unsafe_allow_html=True,
 )
 
@@ -340,7 +340,6 @@ elif page == "Deteksi Hoaks":
         cek = st.button("Cek Berita")
 
     with col_result:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
 
         if cek:
             label, proba_hoax = predict_text(text)
@@ -409,13 +408,25 @@ elif page == "Deteksi Hoaks":
                     unsafe_allow_html=True,
                 )
         else:
-            st.markdown(
-                """
-                Belum ada prediksi. Masukkan teks berita di sebelah kiri lalu klik tombol
-                <b>"Cek Berita"</b>.
-                """,
-                unsafe_allow_html=True,
+          st.markdown(
+              """
+              <div style="
+                  margin-top:1rem;
+                  padding:1.2rem 1.4rem;
+                  border:1px #374151;
+                  border-radius:14px;
+                  background:rgba(255,255,255,0.02);
+                  text-align:center;
+                  color:#9CA3AF;
+                  font-size:0.9rem;
+              ">
+                  ⏳ <b>Belum ada prediksi.</b><br/>
+                  Masukkan teks berita di sebelah kiri lalu klik tombol <b>Cek Berita</b>.
+              </div>
+              """,
+              unsafe_allow_html=True,
             )
+
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -595,12 +606,11 @@ elif page == "Tentang Tim":
     st.markdown("## 👥 Anggota Kelompok")
     st.markdown(
         """
-        (Silakan isi sendiri nama & peran anggota di sini, misalnya:)
-
-        - **Nama 1** – Data Collection & Preprocessing  
-        - **Nama 2** – Model Development & Evaluation  
-        - **Nama 3** – UI/UX & Implementasi Streamlit  
-        - **Nama 4** – Dokumentasi & Laporan  
+        - **Taufik Qurohman**
+        - **Muhammad Zikra Al Rizkya Adler**
+        - **Ariel Saradilla**
+        - **M. Agung Ramadhan**
+        - **Hauzan Rafi Attallah**
         """
     )
 
