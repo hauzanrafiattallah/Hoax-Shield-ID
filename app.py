@@ -29,12 +29,8 @@ st.markdown(
 
 
     section[data-testid="stSidebar"] {{
-      background: transparent !important;
-      border-right: 1px solid var(--border-color) !important;
-    }}
-
-    section[data-testid="stSidebar"] > div:first-child {{
-      padding-right: 0 !important;
+        background: transparent !important;
+        border-right: 1px solid rgba(0,0,0,0.1);
     }}
 
     
@@ -395,7 +391,7 @@ elif page == "Deteksi Hoaks":
                     f"""
                     <div class="metric-label">Probabilitas Hoaks</div>
                     <div class="metric-value">{pct_hoax:.1f}%</div>
-                    <div style="font-size:0.82rem; ">
+                    <div style="font-size:0.82rem;">
                         (Probabilitas bahwa berita termasuk kelas <b>Hoaks</b> menurut model.)
                     </div>
                     """,
