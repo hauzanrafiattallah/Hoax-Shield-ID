@@ -29,7 +29,6 @@ st.markdown(
 
 
     section[data-testid="stSidebar"] {{
-        background: transparent !important;
         border-right: 1px solid rgba(0,0,0,0.1);
     }}
 
