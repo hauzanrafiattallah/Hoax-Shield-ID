@@ -201,7 +201,7 @@ st.sidebar.markdown(
     f"""
     <div style="padding-top:0.5rem; padding-bottom:0.75rem;">
         <span class="pill accent-pill">🛡️ {APP_NAME}</span>
-        <div style="margin-top:0.75rem; font-size:0.8rem; color:#9CA3AF;">
+        <div style="margin-top:0.75rem; font-size:0.8rem;">
             Deteksi berita hoaks berbahasa Indonesia berbasis NLP
             (TF-IDF + Logistic Regression).
         </div>
@@ -260,7 +260,7 @@ if page == "Beranda":
             f"""
             <div class="card" style="margin-top:1rem;">
                 <div class="metric-label">Kenapa aplikasi ini dibuat?</div>
-                <p style="font-size:0.94rem; color:#9CA3AF; margin-top:0.4rem;">
+                <p style="font-size:0.94rem; margin-top:0.4rem;">
                     Penyebaran hoaks di media sosial dan aplikasi chat semakin masif. 
                     {APP_NAME} membantu pengguna memiliki <b>second opinion</b> saat membaca berita, 
                     dengan memberikan indikasi probabilitas hoaks berdasarkan pola bahasa.
@@ -288,17 +288,17 @@ if page == "Beranda":
                 <div class="metric-label">Model</div>
                 <div style="margin-top:0.35rem; font-size:0.95rem;">
                     <b>TF-IDF + Logistic Regression</b><br/>
-                    <span style="font-size:0.8rem; color:#9CA3AF;">
+                    <span style="font-size:0.8rem;">
                         Dilatih dengan dataset <b>Deteksi Berita Hoaks Indo</b> (Kaggle).
                     </span>
                 </div>
                 <div style="margin-top:1.1rem;">
                     <div class="metric-label">Performa (Test Set)</div>
                     <div class="metric-value">≈ 0.98</div>
-                    <div style="font-size:0.8rem; color:#9CA3AF;">Accuracy</div>
+                    <div style="font-size:0.8rem;">Accuracy</div>
                 </div>
                 <hr style="border-color:#111827; margin:1rem 0 0.9rem 0;"/>
-                <ul style="font-size:0.85rem; color:#9CA3AF; padding-left:1.2rem;">
+                <ul style="font-size:0.85rem; padding-left:1.2rem;">
                     <li>AUC ROC ≈ 0.998</li>
                     <li>Bahasa: Indonesia</li>
                     <li>Jenis tugas: biner (Real vs Hoaks)</li>
@@ -391,7 +391,7 @@ elif page == "Deteksi Hoaks":
                     f"""
                     <div class="metric-label">Probabilitas Hoaks</div>
                     <div class="metric-value">{pct_hoax:.1f}%</div>
-                    <div style="font-size:0.82rem; color:#9CA3AF;">
+                    <div style="font-size:0.82rem; ">
                         (Probabilitas bahwa berita termasuk kelas <b>Hoaks</b> menurut model.)
                     </div>
                     """,
@@ -404,7 +404,7 @@ elif page == "Deteksi Hoaks":
 
                 st.markdown(
                     f"""
-                    <div style="font-size:0.86rem; color:#9CA3AF;">
+                    <div style="font-size:0.86rem;">
                         <b>Interpretasi cepat:</b><br/>
                         • Jika skor hoaks &gt; 70%, sebaiknya sangat berhati-hati dan lakukan cross-check. <br/>
                         • Jika skor berada di sekitar 50%, berita mengandung pola bahasa campuran — verifikasi manual sangat disarankan. <br/>
@@ -423,7 +423,6 @@ elif page == "Deteksi Hoaks":
                   border-radius:14px;
                   background:rgba(255,255,255,0.02);
                   text-align:center;
-                  color:#9CA3AF;
                   font-size:0.9rem;
               ">
                   ⏳ <b>Belum ada prediksi.</b><br/>
